@@ -2,9 +2,9 @@ name:                HaskellCoursework2
 version:             0.1.0.0
 github:              "githubuser/HaskellCoursework2"
 license:             BSD-3-Clause
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2024 Author name here"
+author:              "Jordan Mensah"
+maintainer:          "ec24945@qmul.ac.uk"
+copyright:           "Jordan Mensah"
 
 extra-source-files:
 - README.md
@@ -20,7 +20,9 @@ extra-source-files:
 description:         Please see the README on GitHub at <https://github.com/githubuser/HaskellCoursework2#readme>
 
 dependencies:
-- base >= 4.7 && < 5
+- base 
+- time 
+- random
 
 ghc-options:
 - -Wall
