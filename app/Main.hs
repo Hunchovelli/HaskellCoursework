@@ -21,7 +21,7 @@ main = do
     -- | Create an empty MVar[log] for the log
     logVar <- newMVar []
     -- | Start the server thread
-    _ <- forkIO $ processRequests queue handler requestCounter
+    _ <- forkIO $ processRequests queue handler requestCounter logVar
     -- | Start 10 client threads
     replicateM_ 10 (forkIO (client queue requestCounter logVar))
     -- | Wait until all requests are processed

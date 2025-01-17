@@ -29,8 +29,6 @@ client queue requestCounter logVar = do
     modifyMVar_ logVar $ \log -> return $ log ++ [LogEntry req (Response count timestamp "Pending") 0.0]
     -- Increment the counter
     modifyMVar_ requestCounter $ \c -> return (c + 1)
-    -- | Outputs string to the console to indicate that a request was sent.
-    putStrLn $ "Client sent a request."
     -- Recursively keep sending requests
     client queue requestCounter logVar
     

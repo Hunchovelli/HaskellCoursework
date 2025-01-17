@@ -15,7 +15,9 @@ import Data.Time (UTCTime)
 -- | Imports the System.Exit module
 import System.Exit (exitSuccess)
 -- | Imports the Data.List module
-import Data.List (sortOn)
+import Data.List (minimumBy)
+-- | Imports the Data.Ord module
+import Data.Ord (comparing)
 
 
 -- | Add a request to the queue.
@@ -24,14 +26,12 @@ addRequest :: RequestQueue -> Request -> IO ()
 addRequest queue req = modifyMVar_ queue $ \requests -> return (requests ++ [req])
 
 -- | Process requests from the queue.
-processRequests :: RequestQueue -> (Request -> IO Response) -> MVar Int -> Log -> IO ()
+processRequests :: RequestQueue -> (Request -> Log -> Int -> IO Response) -> MVar Int -> Log -> IO ()
 -- | The processRequests function takes a RequestQueue and a handler function as arguments. It processes requests from the queue by reading the requests from the queue and calling the handler function on each request. It then logs the request and response to a file.
 processRequests queue handler requestCounter logVar = forever $ do -- | The forever function takes an IO action and repeats it indefinitely.
     -- | reads the current count
     count <- readMVar requestCounter
-    -- | reads the current state of the MVar[log]
-    log <- readMVar logVar
-    -- | reads the current state of the queue
+    -- | conditional statement to check if the requests queue is full
     if count >= 100 then do
         putStrLn "Client requests limit reached - 100 requests. Server shutting down."
         exitSuccess
@@ -47,13 +47,13 @@ processRequests queue handler requestCounter logVar = forever $ do -- | The fore
                     -- | Modify the MVar to remove the first request within the queue that needs to be processed first and leave the rest of the requests in the queue.
                     modifyMVar_ queue $ \_ -> return rest
                     -- | Extracts the first request from the queue and processes it using the handler function, FIFO
-                    response <- handler req log count 
+                    response <- handler req logVar count 
                     -- | Outputs the response to the console
                     putStrLn $ "Processed: " ++ show response
 
 -- | Process a single request and return a response
 handler :: Request -> Log -> Int -> IO Response
-handler req log count  = do
+handler req logVar count  = do
     -- | Get the current timestamp for the server response
     timestamp <- getCurrentTime
     -- | Calculate latency and converts it into a float from the difference between the request timestamp and the response timestamp
@@ -63,7 +63,7 @@ handler req log count  = do
     -- | Create the response
     let response = Response count timestamp contentResponse
     -- | Log the request and response
-    logRequestResponse log req response latency
+    logRequestResponse logVar req response latency
     -- | Return the response
     return response
                     
@@ -92,5 +92,10 @@ waitForCompletion requestCounter = do
 fastestResponse :: Log -> IO ()
 fastestResponse logVar = do
     log <- readMVar logVar
-    let fastestLatency = minimum $ map latency log
+    let fastestEntry = minimumBy (comparing latency) log
+    let fastestRequest = logRequest fastestEntry
+    let fastestResponse = logResponse fastestEntry
+    let fastestLatency = latency fastestEntry
     putStrLn $ "Fastest response: " ++ show fastestLatency ++ " seconds"
+    putStrLn $ "Request: " ++ show fastestRequest
+    putStrLn $ "Response: " ++ show fastestResponse
